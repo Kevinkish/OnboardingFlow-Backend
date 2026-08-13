@@ -4,9 +4,11 @@ import com.example.onboardflow.api.controllers.AuthControllers
 import com.example.onboardflow.domain.exceptions.CustomNotFoundException
 import com.example.onboardflow.domain.exceptions.ErrorOccurrenceException
 import com.example.onboardflow.domain.exceptions.UserAlreadyExistsException
+import com.example.onboardflow.domain.model.EmailVerificationToken
 import com.example.onboardflow.domain.model.RefreshToken
 import com.example.onboardflow.domain.model.User
 import com.example.onboardflow.domain.model.UserStatusEnum
+import com.example.onboardflow.domain.repository.EmailVerificationTokenRepository
 import com.example.onboardflow.domain.repository.RefreshTokenRepository
 import com.example.onboardflow.domain.repository.UserRepository
 import com.example.onboardflow.infrastructure.security.HashEncoder
@@ -17,13 +19,16 @@ import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 import java.util.*
 
 @Service
 class AuthService(
     private val jwtService: JwtService,
+    private val emailService: EmailService,
     private val userRepository: UserRepository,
     private val hashEncoder: HashEncoder,
+    private val emailVerificationTokenRepository: EmailVerificationTokenRepository,
     private val refreshTokenRepository: RefreshTokenRepository
 ) {
 
@@ -72,7 +77,8 @@ class AuthService(
         if (userRepository.findByEmail(cleanEmail) != null) {
             throw UserAlreadyExistsException("An error occurred")
         }
-        return userRepository.save(
+
+        val newUser = userRepository.save(
             User(
                 email = cleanEmail,
                 hashedPassword = hashEncoder.encode(password.toString()),
@@ -84,6 +90,16 @@ class AuthService(
                 userRole = null,
             )
         )
+        val hashedVerificationToken = hashEncoder.encode(UUID.randomUUID().toString())
+        emailVerificationTokenRepository.save(
+            EmailVerificationToken(
+                hashedToken = hashedVerificationToken, user = newUser,
+                expiresAt = Instant.now().plus(3, ChronoUnit.DAYS),
+                createdAt = Instant.now()
+            )
+        )
+        emailService.sendVerificationEmail(newUser.email, hashedVerificationToken)
+        return newUser
     }
 
     fun profile(): User {
@@ -93,6 +109,16 @@ class AuthService(
     @Transactional
     fun updateUserMe(body: AuthControllers.UserUpdateRequest): User {
         val user = getConnectedUser()
+        when (user.status) {
+            UserStatusEnum.DEACTIVATED -> throw ErrorOccurrenceException("User is deactivated")
+            UserStatusEnum.PENDING_VERIFICATION -> throw ErrorOccurrenceException("User pending verification")
+            else -> {}
+        }
+        user.isEmailVerified?.let {
+            if (!it) {
+                throw ErrorOccurrenceException("Mail to verified")
+            }
+        }
         if (with(body) {
                 listOf(
                     fullName,
@@ -190,5 +216,20 @@ class AuthService(
         val digest = MessageDigest.getInstance("SHA-256")
         val hashBytes = digest.digest(token.encodeToByteArray())
         return Base64.getEncoder().encodeToString(hashBytes)
+    }
+
+    fun verifyEmail(tokenValue: String) {
+        val token = emailVerificationTokenRepository.findByHashedToken(tokenValue)
+            ?: throw CustomNotFoundException("Token not found")
+
+        if (token.expiresAt.isBefore(Instant.now())) {
+            throw ErrorOccurrenceException("Expired token")
+        }
+
+        val user = token.user
+        user.isEmailVerified = true
+        user.status = UserStatusEnum.ACTIVE
+        userRepository.save(user)
+        emailVerificationTokenRepository.delete(token)
     }
 }

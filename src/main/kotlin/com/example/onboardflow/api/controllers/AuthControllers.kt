@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.time.Instant
 
@@ -78,32 +79,11 @@ class AuthControllers(
         return newUser.toResponse()
     }
 
-//    @GetMapping("user/all")
-//    fun getAllUsers(): List<MeProfileResponse> {
-//        if (getConnectedUser().id != null) {
-//            checkAdmin()
-//            return userRepository.findAll().map { user -> user.toResponse() }
-//        } else {
-//            throw ResponseStatusException(HttpStatus.NOT_FOUND)
-//        }
-//    }
-
-//    @GetMapping(path = ["user/{id}"])
-//    fun findUserById(
-//        @PathVariable(required = true) id: UUID
-//    ): MeProfileResponse {
-//        if (getConnectedUser().id != null) {
-//            checkAdmin()
-//            val user = userRepository.findUserById(id)
-//            if (user == null) {
-//                throw ResponseStatusException(HttpStatus.NOT_FOUND, "User with this id not found")
-//            } else {
-//                return user.toResponse();
-//            }
-//        } else {
-//            throw ResponseStatusException(HttpStatus.NOT_FOUND, "User with this id not found")
-//        }
-//    }
+    @GetMapping("/verify-email")
+    fun verifyEmail(@RequestParam("token") token: String): ResponseEntity<String> {
+        authService.verifyEmail(token)
+        return ResponseEntity.ok("Successfully verified email ! You know have full access")
+    }
 
     @PutMapping(path = ["/me"])
     fun updateUserMe(
