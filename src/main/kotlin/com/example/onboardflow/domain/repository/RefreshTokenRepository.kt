@@ -21,6 +21,9 @@ interface RefreshTokenRepository : JpaRepository<RefreshToken, Long> {
         @Param("hashedToken") hashedToken: String
     )
 
+//    @Query("SELECT n FROM RefreshToken n WHERE n.user = :user ORDER BY n.createdAt DESC")
+//    fun findLatestRefreshTokenByUser(user: User): RefreshToken?
+
     @Modifying
     @Transactional
     @Query("DELETE FROM RefreshToken n WHERE n.user = :user")

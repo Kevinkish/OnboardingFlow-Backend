@@ -126,6 +126,12 @@ class AuthControllers(
         return authService.login(body.email, body.password)
     }
 
+//    @GetMapping("/get-token")
+//    fun getToken(
+//     ): RefreshToken {
+//        return authService.getRefreshToken()
+//    }
+
     @PostMapping("/refresh")
     fun refresh(
         @RequestBody body: RefreshTokenRequest

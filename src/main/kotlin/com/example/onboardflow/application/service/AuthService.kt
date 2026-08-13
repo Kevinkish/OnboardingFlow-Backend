@@ -1,9 +1,9 @@
 package com.example.onboardflow.application.service
 
 import com.example.onboardflow.api.controllers.AuthControllers
+import com.example.onboardflow.domain.exceptions.CustomNotFoundException
 import com.example.onboardflow.domain.exceptions.ErrorOccurrenceException
 import com.example.onboardflow.domain.exceptions.UserAlreadyExistsException
-import com.example.onboardflow.domain.exceptions.UserIsNotFoundException
 import com.example.onboardflow.domain.model.RefreshToken
 import com.example.onboardflow.domain.model.User
 import com.example.onboardflow.domain.model.UserStatusEnum
@@ -47,7 +47,7 @@ class AuthService(
         }
 
         return userRepository.findUserById(connectedUserId)
-            ?: throw UserIsNotFoundException("User not found")
+            ?: throw CustomNotFoundException("User not found")
     }
 
 
@@ -114,9 +114,9 @@ class AuthService(
         if (email.isNullOrBlank() || password.isNullOrBlank()) {
             throw ErrorOccurrenceException("Invalid email or password")
         }
-        val user = userRepository.findByEmail(email) ?: throw UserIsNotFoundException("Invalid credentials")
+        val user = userRepository.findByEmail(email) ?: throw CustomNotFoundException("Invalid credentials")
         if (!hashEncoder.matches(password, user.hashedPassword)) {
-            throw UserIsNotFoundException("Invalid credentials")
+            throw CustomNotFoundException("Invalid credentials")
         }
         val newAccesToken = jwtService.generatedAccessToken(user.id!!)
         val newRefreshToken = jwtService.generatedRefreshToken(user.id!!)
@@ -129,6 +129,11 @@ class AuthService(
         )
     }
 
+//    fun getRefreshToken(): RefreshToken {
+//        return refreshTokenRepository.findLatestRefreshTokenByUser(getConnectedUser()) ?: throw CustomNotFoundException(
+//            "User not found"
+//        )
+//    }
 
     //TOKENS
     @Transactional
@@ -139,7 +144,7 @@ class AuthService(
 
         val userId = UUID.fromString(jwtService.getUserIdFromToken(refreshToken))
         val user =
-            userRepository.findUserById(userId) ?: throw UserIsNotFoundException("User not found")
+            userRepository.findUserById(userId) ?: throw CustomNotFoundException("User not found")
         val hashed = hashToken(refreshToken)
         refreshTokenRepository.findByUserIdAndHashedToken(user, hashed)
             ?: throw ErrorOccurrenceException("Refresh token not recognized (maybe used or expired)")
