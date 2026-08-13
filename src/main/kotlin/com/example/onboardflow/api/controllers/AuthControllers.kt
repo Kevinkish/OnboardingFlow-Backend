@@ -115,6 +115,11 @@ class AuthControllers(
     ): AuthService.TokenPair {
         return authService.login(body.email, body.password)
     }
+    @PostMapping("/logout")
+    fun logout(
+    ) {
+        return authService.logout()
+    }
 
 //    @GetMapping("/get-token")
 //    fun getToken(

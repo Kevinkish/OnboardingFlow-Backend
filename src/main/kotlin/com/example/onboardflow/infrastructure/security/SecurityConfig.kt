@@ -12,7 +12,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 class SecurityConfig(
-    private val jwtAuthFilter: JwtAuthFilter
+    private val jwtAuthFilter: JwtAuthFilter,
+    private val rateLimitingFilter: RateLimitingFilter
 ) {
     @Bean
     fun filterChain(httpSecurity: HttpSecurity): SecurityFilterChain {
@@ -31,6 +32,8 @@ class SecurityConfig(
                 .anyRequest().authenticated()
         }
             .exceptionHandling { configurer -> configurer.authenticationEntryPoint(HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)) }
+            //To limit login attemps for a given time
+            .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter::class.java)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter::class.java)
             .build()
     };

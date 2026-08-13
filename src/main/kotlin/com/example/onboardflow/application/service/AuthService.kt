@@ -163,6 +163,9 @@ class AuthService(
         )
     }
 
+    fun logout() {
+        refreshTokenRepository.deletedStoredRefreshTokenByUser(getConnectedUser())
+    }
 //    fun getRefreshToken(): RefreshToken {
 //        return refreshTokenRepository.findLatestRefreshTokenByUser(getConnectedUser()) ?: throw CustomNotFoundException(
 //            "User not found"
