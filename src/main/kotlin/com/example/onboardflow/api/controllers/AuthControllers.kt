@@ -73,7 +73,7 @@ class AuthControllers(
             lastLoginAt = null,
             createdAt = Instant.now(),
             updatedAt = Instant.now(),
-            status = UserStatusEnum.ACTIVE
+            status = UserStatusEnum.PENDING_VERIFICATION
         )
         return newUser.toResponse()
     }
