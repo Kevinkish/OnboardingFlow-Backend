@@ -11,9 +11,6 @@ interface UserRepository : JpaRepository<User, UUID> {
     @Query("SELECT n FROM User n WHERE n.email = :email")
     fun findByEmail(@Param("email") email: String): User?
 
-    @Query("SELECT n FROM User n WHERE n.phone = :phone")
-    fun findByPhone(@Param("phone") phone: String): User?
-
     @Query("SELECT n FROM User n WHERE n.fullName = :fullName")
     fun findByFullName(@Param("fullName") fullName: String): User?
 

@@ -1,6 +1,7 @@
 package com.example.onboardflow.domain.model
 
 import jakarta.persistence.*
+import jakarta.validation.constraints.NotBlank
 import java.time.Instant
 import java.util.*
 
@@ -12,24 +13,19 @@ class User(
     val id: UUID? = null,
 
     @Column(nullable = false, unique = true)
+    @field:NotBlank(message = "Mail is mandatory")
     var email: String,
 
+    @field:NotBlank(message = "Password is mandatory")
     var hashedPassword: String,
 
-    @Column(nullable = false, unique = true)
-    var phone: String,
-
-    @Column(nullable = false, unique = true)
+    @field:NotBlank(message = "Name is mandatory")
     var fullName: String,
-
-    var hashedPinCode: String,
 
     @Enumerated(EnumType.STRING)
     var status: UserStatusEnum,
 
     var lastLoginAt: Instant? = null,
-
-    var phoneVerified: Boolean = false,
 
     val createdAt: Instant = Instant.now(),
 

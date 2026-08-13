@@ -1,6 +1,9 @@
 package com.example.onboardflow.application.service
 
 import com.example.onboardflow.api.controllers.AuthControllers
+import com.example.onboardflow.domain.exceptions.ErrorOccurrenceException
+import com.example.onboardflow.domain.exceptions.UserAlreadyExistsException
+import com.example.onboardflow.domain.exceptions.UserIsNotFoundException
 import com.example.onboardflow.domain.model.RefreshToken
 import com.example.onboardflow.domain.model.User
 import com.example.onboardflow.domain.model.UserStatusEnum
@@ -9,10 +12,9 @@ import com.example.onboardflow.domain.repository.UserRepository
 import com.example.onboardflow.infrastructure.security.HashEncoder
 import com.example.onboardflow.infrastructure.security.JwtService
 import jakarta.transaction.Transactional
-import org.springframework.http.HttpStatusCode
 import org.springframework.security.authentication.BadCredentialsException
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
-import org.springframework.web.server.ResponseStatusException
 import java.security.MessageDigest
 import java.time.Instant
 import java.util.*
@@ -25,35 +27,50 @@ class AuthService(
     private val refreshTokenRepository: RefreshTokenRepository
 ) {
 
-
     data class TokenPair(
         val accessToken: String,
         val refreshToken: String,
     )
 
-    //USER
+    fun getConnectedUser(): User {
+        val authentication = SecurityContextHolder.getContext().authentication
+
+        if (authentication == null || !authentication.isAuthenticated || authentication.principal == "anonymousUser") {
+            throw ErrorOccurrenceException("Unauthenticated user or expired token")
+        }
+
+        val userIdString = authentication.principal.toString()
+        val connectedUserId = try {
+            UUID.fromString(userIdString)
+        } catch (e: IllegalArgumentException) {
+            throw ErrorOccurrenceException("Invalid user")
+        }
+
+        return userRepository.findUserById(connectedUserId)
+            ?: throw UserIsNotFoundException("User not found")
+    }
+
+
     fun register(
         email: String,
         password: String,
-        phone: String,
         fullName: String,
-        hashedPinCode: String,
         status: UserStatusEnum,
         lastLoginAt: Instant?,
-        phoneVerified: Boolean,
         createdAt: Instant,
         updatedAt: Instant
     ): User {
+        val cleanEmail = email.trim()
+        if (userRepository.findByEmail(cleanEmail) != null) {
+            throw UserAlreadyExistsException("An error occurred")
+        }
         return userRepository.save(
             User(
-                email = email.trim(),
+                email = cleanEmail,
                 hashedPassword = hashEncoder.encode(password),
-                fullName = fullName.trim().replace(" ", "_"),
-                phone = phone.trim(),
-                hashedPinCode = hashEncoder.encode(hashedPinCode),
+                fullName = fullName.trim(),
                 status = status,
                 lastLoginAt = lastLoginAt,
-                phoneVerified = phoneVerified,
                 createdAt = createdAt,
                 updatedAt = updatedAt,
                 userRole = null,
@@ -61,40 +78,45 @@ class AuthService(
         )
     }
 
+    fun profile(): User {
+        return getConnectedUser()
+    }
+
     @Transactional
-    fun updateUser(newUser: AuthControllers.UserUpdateRequest, newUserId: UUID): User {
-        val user = userRepository.findUserById(newUserId)
-            ?: throw ResponseStatusException(
-                HttpStatusCode.valueOf(401),
-                "User is null"
-            )
-        if (with(newUser) {
-                (fullName.isNullOrBlank() && email.isNullOrBlank() && hashedPassword.isNullOrBlank() && phone.isNullOrBlank() && hashedPinCode.isNullOrBlank()
-                        && phoneVerified == null && lastLoginAt == null && status == null) || (hashedPinCode != null && (!hashedPinCode.all { it.isDigit() } || hashedPinCode.length != 4))
-
-
+    fun updateUserMe(body: AuthControllers.UserUpdateRequest): User {
+        val user = getConnectedUser()
+        if (with(body) {
+                listOf(
+                    fullName,
+                    password,
+                ).all { it.isNullOrBlank() } && listOf(
+                    lastLoginAt, status
+                ).all {
+                    it == null
+                }
             }) {
-            throw BadCredentialsException("All fields are null or a field is not allowed")
+            throw ErrorOccurrenceException("All allowed fields are null")
         }
-        with(newUser) {
-            fullName?.let { user.fullName = it.trim().replace(" ", "_") }
-            email?.let { user.email = it.trim() }
-            hashedPassword?.let { user.hashedPassword = hashEncoder.encode(it) }
-            phone?.let { user.phone = it.trim() }
-            hashedPinCode?.let { user.hashedPinCode = hashEncoder.encode(it) }
+
+
+        with(body) {
+            fullName?.let { user.fullName = it.trim() }
+            password?.let { user.hashedPassword = hashEncoder.encode(it) }
             status?.let { user.status = it }
             lastLoginAt?.let { user.lastLoginAt = it }
-            phoneVerified?.let { user.phoneVerified = it }
             user.updatedAt = Instant.now()
         }
 
         return userRepository.save(user);
     }
 
-    fun login(email: String, password: String): TokenPair {
-        val user = userRepository.findByEmail(email) ?: throw BadCredentialsException("Invalid credentials")
+    fun login(email: String?, password: String?): TokenPair {
+        if (email.isNullOrBlank() || password.isNullOrBlank()) {
+            throw ErrorOccurrenceException("Invalid email or password")
+        }
+        val user = userRepository.findByEmail(email) ?: throw UserIsNotFoundException("Invalid credentials")
         if (!hashEncoder.matches(password, user.hashedPassword)) {
-            throw BadCredentialsException("Invalid credentials")
+            throw UserIsNotFoundException("Invalid credentials")
         }
         val newAccesToken = jwtService.generatedAccessToken(user.id!!)
         val newRefreshToken = jwtService.generatedRefreshToken(user.id!!)
@@ -112,15 +134,15 @@ class AuthService(
     @Transactional
     fun refresh(refreshToken: String): TokenPair {
         if (!jwtService.validatedRefreshToken(refreshToken)) {
-            throw IllegalArgumentException("Invalid refresh token.")
+            throw ErrorOccurrenceException("Invalid refresh token.")
         }
 
         val userId = UUID.fromString(jwtService.getUserIdFromToken(refreshToken))
         val user =
-            userRepository.findUserById(userId) ?: throw IllegalArgumentException("Invalid refresh token.")
+            userRepository.findUserById(userId) ?: throw UserIsNotFoundException("User not found")
         val hashed = hashToken(refreshToken)
         refreshTokenRepository.findByUserIdAndHashedToken(user, hashed)
-            ?: throw IllegalArgumentException("Refresh token not recognized (maybe used or expired)")
+            ?: throw ErrorOccurrenceException("Refresh token not recognized (maybe used or expired)")
         refreshTokenRepository.deleteByUserIdAndHashedToken(user, hashed)
 
         val newAccessToken = jwtService.generatedAccessToken(user.id!!)
