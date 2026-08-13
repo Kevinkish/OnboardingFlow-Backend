@@ -5,6 +5,7 @@ import com.example.onboardflow.domain.exceptions.ErrorOccurrenceException
 import com.example.onboardflow.domain.exceptions.UserAlreadyExistsException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
@@ -30,5 +31,21 @@ class GlobalExceptionHandler {
         return ResponseEntity
             .status(HttpStatus.UNAUTHORIZED)
             .body(ex.message)
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException::class)
+    fun handleValidationExceptions(ex: MethodArgumentNotValidException): ResponseEntity<Map<String, Any>> {
+        val errors = ex.bindingResult.fieldErrors.associate {
+            it.field to (it.defaultMessage ?: "Invalid value")
+        }
+
+        val body = mapOf(
+            "status" to 400,
+            "error" to "Bad Request",
+            "message" to "Input validation failed",
+            "fieldErrors" to errors
+        )
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body)
     }
 }

@@ -52,23 +52,31 @@ class AuthService(
 
 
     fun register(
-        email: String,
-        password: String,
-        fullName: String,
+        email: String?,
+        password: String?,
+        fullName: String?,
         status: UserStatusEnum,
         lastLoginAt: Instant?,
         createdAt: Instant,
         updatedAt: Instant
     ): User {
-        val cleanEmail = email.trim()
+        if (listOf(
+                email,
+                password,
+                fullName
+            ).any({ it.isNullOrBlank() })
+        ) {
+            throw BadCredentialsException("Invalid credentials")
+        }
+        val cleanEmail = email.toString().trim()
         if (userRepository.findByEmail(cleanEmail) != null) {
             throw UserAlreadyExistsException("An error occurred")
         }
         return userRepository.save(
             User(
                 email = cleanEmail,
-                hashedPassword = hashEncoder.encode(password),
-                fullName = fullName.trim(),
+                hashedPassword = hashEncoder.encode(password.toString()),
+                fullName = fullName.toString().trim(),
                 status = status,
                 lastLoginAt = lastLoginAt,
                 createdAt = createdAt,

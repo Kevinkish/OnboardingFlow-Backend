@@ -3,7 +3,11 @@ package com.example.onboardflow.api.controllers
 import com.example.onboardflow.application.service.AuthService
 import com.example.onboardflow.domain.model.User
 import com.example.onboardflow.domain.model.UserStatusEnum
+import jakarta.validation.Valid
+import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Pattern
+import jakarta.validation.constraints.Size
 import org.springframework.web.bind.annotation.*
 import java.time.Instant
 
@@ -12,24 +16,30 @@ import java.time.Instant
 @RequestMapping("/auth")
 class AuthControllers(
     private val authService: AuthService,
-//    private val userRepository: UserRepository
 ) {
     data class UserRegistrationRequest(
-        @field:NotBlank(message = "Mail is mandatory")
-        val email: String,
+        @field:NotBlank(message = "Email is required")
+        @field:Email(message = "Please provide a valid email address")
+        val email: String?,
 
-        @field:NotBlank(message = "Password is mandatory")
-        val password: String,
+        @field:NotBlank(message = "Password is required")
+        @field:Size(min = 8, message = "Password must be at least 8 characters long")
+        @field:Pattern(
+            regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!._-]).*$",
+            message = "Password must contain at least one digit, one lowercase, one uppercase letter, and one special character (ex: Password123@)"
+        )
+        val password: String?,
 
-        @field:NotBlank(message = "Mail is mandatory")
-        val fullName: String
+        @field:NotBlank(message = "Full name is required")
+        @field:Size(min = 2, max = 100, message = "Full name must be between 2 and 100 characters")
+        val fullName: String?
     )
 
     data class LoginRequest(
         @field:NotBlank(message = "Mail is mandatory")
-        val email: String,
+        val email: String?,
         @field:NotBlank(message = "Password is mandatory")
-        val password: String,
+        val password: String?,
     )
 
     data class RefreshTokenRequest(
@@ -40,9 +50,9 @@ class AuthControllers(
         val email: String,
         val fullName: String,
         val status: UserStatusEnum,
-        val lastLoginAt: Instant? = null,
+        val lastLoginAt: Instant? = null
 
-        )
+    )
 
     data class UserUpdateRequest(
         val password: String? = null,
@@ -54,7 +64,7 @@ class AuthControllers(
     @PostMapping("/register")
 //    @ResponseStatus(HttpStatus.CREATED)
     fun register(
-        @RequestBody body: UserRegistrationRequest
+        @Valid @RequestBody body: UserRegistrationRequest
     ): MeProfileResponse {
         val newUser = authService.register(
             email = body.email,
@@ -121,7 +131,7 @@ class AuthControllers(
 
     @PostMapping("/login")
     fun login(
-        @RequestBody body: LoginRequest
+        @Valid @RequestBody body: LoginRequest
     ): AuthService.TokenPair {
         return authService.login(body.email, body.password)
     }
