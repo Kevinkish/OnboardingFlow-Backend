@@ -51,16 +51,26 @@ class AuthControllers(
         val email: String,
         val fullName: String,
         val status: UserStatusEnum,
+        var profileImageUrl: String? = null,
         val lastLoginAt: Instant? = null
 
     )
 
     data class UserUpdateRequest(
+        @field:Size(min = 8, message = "Password must be at least 8 characters long")
+        @field:Pattern(
+            regexp = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=!._-]).*$",
+            message = "Password must contain at least one digit, one lowercase, one uppercase letter, and one special character (ex: Password123@)"
+        )
         val password: String? = null,
+
+        @field:Size(min = 2, max = 100, message = "Full name must be between 2 and 100 characters")
         val fullName: String? = null,
         val status: UserStatusEnum? = null,
         val lastLoginAt: Instant? = null,
-    )
+        var profileImageUrl: String? = null,
+
+        )
 
     @PostMapping("/register")
 //    @ResponseStatus(HttpStatus.CREATED)
@@ -87,7 +97,7 @@ class AuthControllers(
 
     @PutMapping(path = ["/me"])
     fun updateUserMe(
-        @RequestBody body: UserUpdateRequest
+        @Valid @RequestBody body: UserUpdateRequest
     ): MeProfileResponse {
         return authService.updateUserMe(body = body).toResponse()
     }
@@ -115,6 +125,7 @@ class AuthControllers(
     ): AuthService.TokenPair {
         return authService.login(body.email, body.password)
     }
+
     @PostMapping("/logout")
     fun logout(
     ) {

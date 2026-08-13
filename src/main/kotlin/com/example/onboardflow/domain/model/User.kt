@@ -22,6 +22,8 @@ class User(
     @field:NotBlank(message = "Name is mandatory")
     var fullName: String,
 
+    var profileImageUrl: String?=null,
+
     @Enumerated(EnumType.STRING)
     var status: UserStatusEnum,
 
@@ -33,8 +35,9 @@ class User(
 
     var updatedAt: Instant = Instant.now(),
 
-    @OneToOne(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true)
-    val userRole: UserRole? = null,
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    var role: RoleEnum = RoleEnum.USER,
 
     @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true)
     val refreshTokens: MutableSet<RefreshToken> = mutableSetOf(),

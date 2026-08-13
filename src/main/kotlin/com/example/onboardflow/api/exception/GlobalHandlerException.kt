@@ -1,5 +1,6 @@
 package com.example.onboardflow.api.exception
 
+import com.example.onboardflow.domain.exceptions.CustomForbiddenException
 import com.example.onboardflow.domain.exceptions.CustomNotFoundException
 import com.example.onboardflow.domain.exceptions.ErrorOccurrenceException
 import com.example.onboardflow.domain.exceptions.UserAlreadyExistsException
@@ -23,6 +24,12 @@ class GlobalExceptionHandler {
     fun handleNotFound(ex: CustomNotFoundException): ResponseEntity<String> {
         return ResponseEntity
             .status(HttpStatus.NOT_FOUND)
+            .body(ex.message)
+    }
+    @ExceptionHandler(CustomForbiddenException::class)
+    fun handleForbidden(ex: CustomForbiddenException): ResponseEntity<String> {
+        return ResponseEntity
+            .status(HttpStatus.FORBIDDEN)
             .body(ex.message)
     }
 

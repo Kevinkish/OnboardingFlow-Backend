@@ -4,10 +4,7 @@ import com.example.onboardflow.api.controllers.AuthControllers
 import com.example.onboardflow.domain.exceptions.CustomNotFoundException
 import com.example.onboardflow.domain.exceptions.ErrorOccurrenceException
 import com.example.onboardflow.domain.exceptions.UserAlreadyExistsException
-import com.example.onboardflow.domain.model.EmailVerificationToken
-import com.example.onboardflow.domain.model.RefreshToken
-import com.example.onboardflow.domain.model.User
-import com.example.onboardflow.domain.model.UserStatusEnum
+import com.example.onboardflow.domain.model.*
 import com.example.onboardflow.domain.repository.EmailVerificationTokenRepository
 import com.example.onboardflow.domain.repository.RefreshTokenRepository
 import com.example.onboardflow.domain.repository.UserRepository
@@ -87,7 +84,7 @@ class AuthService(
                 lastLoginAt = lastLoginAt,
                 createdAt = createdAt,
                 updatedAt = updatedAt,
-                userRole = null,
+                role = RoleEnum.USER,
             )
         )
         val hashedVerificationToken = hashEncoder.encode(UUID.randomUUID().toString())
@@ -123,6 +120,7 @@ class AuthService(
                 listOf(
                     fullName,
                     password,
+                    profileImageUrl
                 ).all { it.isNullOrBlank() } && listOf(
                     lastLoginAt, status
                 ).all {
@@ -137,6 +135,7 @@ class AuthService(
             fullName?.let { user.fullName = it.trim() }
             password?.let { user.hashedPassword = hashEncoder.encode(it) }
             status?.let { user.status = it }
+            profileImageUrl?.let { user.profileImageUrl = it }
             lastLoginAt?.let { user.lastLoginAt = it }
             user.updatedAt = Instant.now()
         }
