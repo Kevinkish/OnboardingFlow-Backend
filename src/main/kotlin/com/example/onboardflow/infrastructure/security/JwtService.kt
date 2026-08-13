@@ -1,4 +1,4 @@
-package com.example.onboardflow.security
+package com.example.onboardflow.infrastructure.security
 
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.Jwts

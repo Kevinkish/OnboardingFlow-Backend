@@ -1,4 +1,4 @@
-package com.example.onboardflow.database.model
+package com.example.onboardflow.domain.model
 
 import jakarta.persistence.*
 import java.time.Instant

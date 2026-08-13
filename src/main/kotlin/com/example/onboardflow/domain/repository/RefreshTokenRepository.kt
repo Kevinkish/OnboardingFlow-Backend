@@ -1,7 +1,7 @@
-package com.example.onboardflow.database.repository
+package com.example.onboardflow.domain.repository
 
-import com.example.onboardflow.database.model.RefreshToken
-import com.example.onboardflow.database.model.User
+import com.example.onboardflow.domain.model.RefreshToken
+import com.example.onboardflow.domain.model.User
 import jakarta.transaction.Transactional
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying

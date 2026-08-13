@@ -1,4 +1,4 @@
-package com.example.onboardflow.security
+package com.example.onboardflow.infrastructure.security
 
 import jakarta.servlet.DispatcherType
 import org.springframework.context.annotation.Bean

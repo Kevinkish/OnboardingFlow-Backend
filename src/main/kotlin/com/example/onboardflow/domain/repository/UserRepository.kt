@@ -1,6 +1,6 @@
-package com.example.onboardflow.database.repository
+package com.example.onboardflow.domain.repository
 
-import com.example.onboardflow.database.model.User
+import com.example.onboardflow.domain.model.User
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param

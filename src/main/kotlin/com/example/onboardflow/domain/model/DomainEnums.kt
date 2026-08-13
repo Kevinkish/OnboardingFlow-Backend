@@ -1,4 +1,4 @@
-package com.example.onboardflow.database.model
+package com.example.onboardflow.domain.model
 
 enum class UserStatusEnum {
     ACTIVE,

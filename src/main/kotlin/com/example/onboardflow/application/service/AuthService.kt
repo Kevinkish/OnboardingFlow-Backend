@@ -1,13 +1,13 @@
-package com.example.onboardflow.database.service
+package com.example.onboardflow.application.service
 
-import com.example.onboardflow.controllers.AuthControllers
-import com.example.onboardflow.database.model.RefreshToken
-import com.example.onboardflow.database.model.User
-import com.example.onboardflow.database.model.UserStatusEnum
-import com.example.onboardflow.database.repository.RefreshTokenRepository
-import com.example.onboardflow.database.repository.UserRepository
-import com.example.onboardflow.security.HashEncoder
-import com.example.onboardflow.security.JwtService
+import com.example.onboardflow.api.controllers.AuthControllers
+import com.example.onboardflow.domain.model.RefreshToken
+import com.example.onboardflow.domain.model.User
+import com.example.onboardflow.domain.model.UserStatusEnum
+import com.example.onboardflow.domain.repository.RefreshTokenRepository
+import com.example.onboardflow.domain.repository.UserRepository
+import com.example.onboardflow.infrastructure.security.HashEncoder
+import com.example.onboardflow.infrastructure.security.JwtService
 import jakarta.transaction.Transactional
 import org.springframework.http.HttpStatusCode
 import org.springframework.security.authentication.BadCredentialsException

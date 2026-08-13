@@ -1,4 +1,4 @@
-package com.example.onboardflow.security
+package com.example.onboardflow.infrastructure.security
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Component

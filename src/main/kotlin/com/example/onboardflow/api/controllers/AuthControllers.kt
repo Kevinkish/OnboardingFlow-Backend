@@ -1,10 +1,10 @@
-package com.example.onboardflow.controllers
+package com.example.onboardflow.api.controllers
 
-import com.example.onboardflow.database.model.RoleEnum
-import com.example.onboardflow.database.model.User
-import com.example.onboardflow.database.model.UserStatusEnum
-import com.example.onboardflow.database.repository.UserRepository
-import com.example.onboardflow.database.service.AuthService
+import com.example.onboardflow.domain.model.RoleEnum
+import com.example.onboardflow.domain.model.User
+import com.example.onboardflow.domain.model.UserStatusEnum
+import com.example.onboardflow.domain.repository.UserRepository
+import com.example.onboardflow.application.service.AuthService
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
 import org.springframework.security.core.context.SecurityContextHolder

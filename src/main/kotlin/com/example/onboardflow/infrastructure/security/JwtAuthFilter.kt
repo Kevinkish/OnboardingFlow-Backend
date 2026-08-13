@@ -1,4 +1,4 @@
-package com.example.onboardflow.security
+package com.example.onboardflow.infrastructure.security
 
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
