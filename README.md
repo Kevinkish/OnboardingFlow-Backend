@@ -1,152 +1,148 @@
 # OnboardFlow Backend
 
-Backend REST de **OnboardFlow**, une application de gestion d'utilisateurs et de parcours d'onboarding.  
-Le projet est développé en **Kotlin** avec **Spring Boot**, utilise **MySQL** pour la persistance, **JWT** pour l'authentification, **Spring Mail/Mailpit** pour la vérification d'adresse e-mail et **OpenAPI/Swagger** pour la documentation de l'API.
+REST backend for **OnboardFlow**, an application for user management and onboarding workflows.
 
-> Version API : `1.0.0`  
-> Version du projet : `0.0.1-SNAPSHOT`
+The project is built with **Kotlin** and **Spring Boot**, uses **MySQL** for persistence, **JWT** for authentication, **Spring Mail/Mailpit** for email verification, and **OpenAPI/Swagger** for API documentation.
+
+> API Version: `1.0.0`  
+> Project Version: `0.0.1-SNAPSHOT`
 
 ---
 
-## Sommaire
+## Table of Contents
 
-- [Présentation](#présentation)
-- [Fonctionnalités](#fonctionnalités)
-- [Stack technique](#stack-technique)
+- [Overview](#overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
-- [Structure du projet](#structure-du-projet)
-- [Prérequis](#prérequis)
+- [Project Structure](#project-structure)
+- [Requirements](#requirements)
 - [Installation](#installation)
-  - [Avec Docker](#avec-docker-recommandé)
-  - [En local](#en-local)
+  - [With Docker](#with-docker-recommended)
+  - [Locally](#locally)
 - [Configuration](#configuration)
-- [Variables d'environnement](#variables-denvironnement)
-- [Lancement](#lancement)
-- [Base de données](#base-de-données)
-- [Authentification JWT](#authentification-jwt)
+- [Environment Variables](#environment-variables)
+- [Running the Application](#running-the-application)
+- [Database](#database)
+- [JWT Authentication](#jwt-authentication)
 - [API](#api)
-  - [Inscription](#1-inscription)
-  - [Vérification e-mail](#2-vérification-e-mail)
-  - [Renvoyer l'e-mail de vérification](#3-renvoyer-le-mail-de-vérification)
-  - [Connexion](#4-connexion)
-  - [Profil courant](#5-profil-courant)
-  - [Modification du profil](#6-modification-du-profil)
-  - [Rafraîchir les tokens](#7-rafraîchir-les-tokens)
-  - [Déconnexion](#8-déconnexion)
-  - [Administration](#9-administration-des-utilisateurs)
 - [Swagger / OpenAPI](#swagger--openapi)
-- [E-mails de développement](#e-mails-de-développement)
-- [Rate limiting](#rate-limiting)
+- [Development Emails](#development-emails)
+- [Rate Limiting](#rate-limiting)
 - [Tests](#tests)
 - [Docker](#docker)
-- [Compte administrateur initial](#compte-administrateur-initial)
-- [Modèle de données](#modèle-de-données)
-- [Sécurité](#sécurité)
-- [Points d'attention](#points-dattention)
-- [Dépannage](#dépannage)
-- [Améliorations recommandées](#améliorations-recommandées)
-- [Licence](#licence)
+- [Initial Admin Account](#initial-admin-account)
+- [Data Model](#data-model)
+- [Security](#security)
+- [Important Notes](#important-notes)
+- [Troubleshooting](#troubleshooting)
+- [Recommended Improvements](#recommended-improvements)
+- [License](#license)
 
 ---
 
-## Présentation
+## Overview
 
-OnboardFlow Backend fournit une API REST permettant de gérer le cycle de vie d'un utilisateur :
+OnboardFlow Backend provides a REST API for managing the complete user onboarding lifecycle:
 
-1. création d'un compte ;
-2. envoi d'un e-mail de vérification ;
-3. activation du compte après vérification ;
-4. connexion avec génération d'un access token et d'un refresh token ;
-5. consultation et modification du profil ;
-6. renouvellement sécurisé du refresh token ;
-7. déconnexion ;
-8. consultation paginée des utilisateurs côté administration.
+1. account creation;
+2. email verification;
+3. account activation;
+4. login with access and refresh tokens;
+5. profile retrieval and updates;
+6. secure token refresh;
+7. logout;
+8. paginated user management for administrators.
 
-Le backend est conçu comme une API **stateless** : aucune session HTTP classique n'est utilisée. L'identité de l'utilisateur est transportée par un JWT d'accès.
+The backend is designed as a **stateless API**. No traditional HTTP session is used; user identity is carried through a JWT access token.
 
 ---
 
-## Fonctionnalités
+## Features
 
-### Gestion des comptes
+### Account Management
 
-- Inscription avec validation des données.
-- Vérification du format de l'adresse e-mail.
-- Politique de mot de passe :
-  - minimum 8 caractères ;
-  - au moins une majuscule ;
-  - au moins une minuscule ;
-  - au moins un chiffre ;
-  - au moins un caractère spécial.
-- Hashage des mots de passe avec **BCrypt**.
-- Vérification de l'adresse e-mail.
-- Renvoi du lien de vérification.
-- Consultation du profil.
-- Modification du nom complet, mot de passe, statut et image de profil.
+- User registration with request validation.
+- Email address validation.
+- Password policy:
+  - minimum 8 characters;
+  - at least one uppercase letter;
+  - at least one lowercase letter;
+  - at least one digit;
+  - at least one special character.
+- Password hashing with **BCrypt**.
+- Email verification.
+- Resending verification emails.
+- Current-user profile retrieval.
+- Profile updates.
+- Password changes.
+- Profile image URL management.
+- User status management.
 
-### Authentification
+### Authentication
 
-- Access token JWT.
-- Refresh token JWT.
-- Access token valable **1 heure**.
-- Refresh token valable **30 jours**.
-- Rotation du refresh token lors du renouvellement.
-- Stockage du refresh token sous forme de hash SHA-256 en base.
-- Suppression du refresh token à la déconnexion.
-- Une seule session refresh token est conservée par utilisateur.
+- JWT access tokens.
+- JWT refresh tokens.
+- Access token lifetime: **1 hour**.
+- Refresh token lifetime: **30 days**.
+- Refresh-token rotation.
+- SHA-256 hashing of stored refresh tokens.
+- Refresh-token deletion on logout.
+- One refresh-token session stored per user.
 
-### Sécurité
+### Security
 
 - Spring Security.
-- Filtre d'authentification JWT.
-- API stateless.
-- Protection contre les tentatives excessives de connexion avec Bucket4j.
-- Réponses JSON pour les erreurs `401 Unauthorized`.
-- Validation des données avec Jakarta Validation.
+- JWT authentication filter.
+- Stateless API.
+- Login rate limiting using Bucket4j.
+- JSON responses for `401 Unauthorized`.
+- Request validation with Jakarta Validation.
+- BCrypt password hashing.
 
 ### Administration
 
-- Liste paginée des utilisateurs.
-- Filtrage par rôle.
-- Filtrage par statut de vérification e-mail.
-- Recherche par nom ou e-mail.
-- Tri et pagination avec les mécanismes Spring Data.
+- Paginated user listing.
+- Filtering by role.
+- Filtering by email verification status.
+- Search by name or email.
+- Pagination and sorting using Spring Data.
 
 ### Documentation
 
 - OpenAPI 3.
 - Swagger UI.
-- Schéma d'authentification `Bearer JWT`.
+- Bearer JWT authentication scheme.
 
 ---
 
-## Stack technique
+## Tech Stack
 
-| Technologie | Utilisation |
+| Technology | Purpose |
 |---|---|
-| Kotlin | Langage principal |
+| Kotlin | Main programming language |
 | Java 17 | Runtime / toolchain |
-| Spring Boot 4.1.0 | Framework backend |
-| Spring Web | API REST |
-| Spring Security | Sécurité |
-| Spring Data JPA | Accès aux données |
+| Spring Boot 4.1.0 | Backend framework |
+| Spring Web | REST API |
+| Spring Security | Security |
+| Spring Data JPA | Data access |
 | Hibernate | ORM |
-| MySQL 8 | Base de données |
-| JJWT 0.12.6 | Création et validation JWT |
-| BCrypt | Hashage des mots de passe |
+| MySQL 8 | Database |
+| JJWT 0.12.6 | JWT creation and validation |
+| BCrypt | Password hashing |
 | Bucket4j 8.10.1 | Rate limiting |
-| Spring Mail | Envoi des e-mails |
-| Mailpit | Capture des e-mails en développement |
+| Spring Mail | Email sending |
+| Mailpit | Email capture in development |
 | SpringDoc OpenAPI 2.3.0 | Swagger / OpenAPI |
-| Spring Actuator | Health check |
-| Gradle | Build et dépendances |
-| Docker | Conteneurisation |
+| Spring Actuator | Health checks |
+| Gradle | Build and dependency management |
+| Docker | Containerization |
 
 ---
 
 ## Architecture
 
-Le projet suit une organisation inspirée d'une architecture en couches / Clean Architecture :
+The project follows a layered architecture inspired by Clean Architecture:
 
 ```text
 src/main/kotlin/com/example/onboardflow/
@@ -194,27 +190,27 @@ src/main/kotlin/com/example/onboardflow/
         └── SecurityConfig.kt
 ```
 
-### Rôle des principales couches
+### Layer Responsibilities
 
 **API**
 
-Expose les endpoints HTTP, valide les requêtes et retourne les réponses.
+Exposes HTTP endpoints, validates requests, and returns API responses.
 
 **Application**
 
-Contient la logique métier, notamment l'inscription, la connexion, la gestion du profil, les tokens et les e-mails.
+Contains business logic for registration, login, profile management, token handling, and email operations.
 
 **Domain**
 
-Contient les entités métier, les enums, les exceptions et les contrats de repository.
+Contains business entities, enums, exceptions, and repository contracts.
 
 **Infrastructure**
 
-Contient les implémentations et mécanismes techniques : sécurité JWT, hashage, configuration Swagger et initialisation de la base.
+Contains technical implementations such as JWT security, password hashing, Swagger configuration, and database initialization.
 
 ---
 
-## Structure du projet
+## Project Structure
 
 ```text
 OnboardingFlow-Backend/
@@ -241,29 +237,29 @@ OnboardingFlow-Backend/
 
 ---
 
-## Prérequis
+## Requirements
 
-### Pour Docker
+### Docker
 
 - Docker
 - Docker Compose
 
-### Pour un lancement local
+### Local Development
 
 - Java 17
 - MySQL 8
 - Git
-- Gradle Wrapper inclus dans le projet
+- Gradle Wrapper included with the project
 
-Il n'est pas nécessaire d'installer Gradle globalement : le projet fournit `gradlew` et `gradlew.bat`.
+You do not need to install Gradle globally because the project includes `gradlew` and `gradlew.bat`.
 
 ---
 
 # Installation
 
-## Avec Docker (recommandé)
+## With Docker (Recommended)
 
-Le projet fournit un `docker-compose.yml` qui démarre trois services :
+The project provides a `docker-compose.yml` that starts three services:
 
 ```text
 ┌──────────────────────────────┐
@@ -280,58 +276,56 @@ Le projet fournit un `docker-compose.yml` qui démarre trois services :
 └─────────────┘  └──────────────┘
 ```
 
-### 1. Cloner le projet
+### 1. Clone the project
 
 ```bash
-git clone <URL_DU_REPOSITORY>
+git clone <REPOSITORY_URL>
 cd OnboardingFlow-Backend
 ```
 
-### 2. Générer un secret JWT
+### 2. Generate a JWT secret
 
-Le projet attend une valeur Base64 dans `JWT_SECRET_BASE64`.
-
-Exemple :
+The project expects a Base64 value in `JWT_SECRET_BASE64`.
 
 ```bash
 openssl rand -base64 32
 ```
 
-Conservez la valeur obtenue.
+Keep the generated value secure.
 
-### 3. Définir la variable
+### 3. Set the variable
 
-Linux / macOS :
+Linux / macOS:
 
 ```bash
-export JWT_SECRET_BASE64="VOTRE_SECRET_BASE64"
+export JWT_SECRET_BASE64="YOUR_BASE64_SECRET"
 ```
 
-Windows PowerShell :
+Windows PowerShell:
 
 ```powershell
-$env:JWT_SECRET_BASE64="VOTRE_SECRET_BASE64"
+$env:JWT_SECRET_BASE64="YOUR_BASE64_SECRET"
 ```
 
-### 4. Démarrer les services
+### 4. Start the services
 
 ```bash
 docker compose up --build
 ```
 
-L'API sera disponible sur :
+The API will be available at:
 
 ```text
 http://localhost:8080
 ```
 
-La base MySQL est exposée localement sur :
+MySQL is exposed locally on:
 
 ```text
 localhost:3307
 ```
 
-Mailpit est disponible sur :
+Mailpit is available at:
 
 ```text
 http://localhost:8025
@@ -339,52 +333,52 @@ http://localhost:8025
 
 ---
 
-# En local
+# Locally
 
-## 1. Préparer MySQL
+## 1. Prepare MySQL
 
-Créer une base :
+Create the database:
 
 ```sql
 CREATE DATABASE onboardflow_db;
 ```
 
-Puis configurer les paramètres :
+Then configure:
 
 ```text
 Host: localhost
 Port: 3306
 Database: onboardflow_db
 Username: root
-Password: votre_mot_de_passe
+Password: your_password
 ```
 
-## 2. Configurer les variables
+## 2. Configure environment variables
 
-Exemple :
+Example:
 
 ```bash
 export SPRING_DATASOURCE_URL="jdbc:mysql://localhost:3306/onboardflow_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 export SPRING_DATASOURCE_USERNAME="root"
-export SPRING_DATASOURCE_PASSWORD="votre_mot_de_passe"
-export JWT_SECRET_BASE64="VOTRE_SECRET_BASE64"
+export SPRING_DATASOURCE_PASSWORD="your_password"
+export JWT_SECRET_BASE64="YOUR_BASE64_SECRET"
 ```
 
-## 3. Lancer l'application
+## 3. Run the application
 
-Linux / macOS :
+Linux / macOS:
 
 ```bash
 ./gradlew bootRun
 ```
 
-Windows :
+Windows:
 
 ```powershell
 .\gradlew.bat bootRun
 ```
 
-L'application écoute sur :
+The local application listens on:
 
 ```text
 http://localhost:8081
@@ -394,13 +388,13 @@ http://localhost:8081
 
 # Configuration
 
-Le fichier principal est :
+The main configuration file is:
 
 ```text
 src/main/resources/application.properties
 ```
 
-Configuration par défaut :
+Default configuration:
 
 ```properties
 spring.application.name=onboardflow
@@ -420,102 +414,103 @@ app.email.verification-base-url=${APP_VERIFICATION_BASE_URL:http://localhost:808
 
 ---
 
-# Variables d'environnement
+# Environment Variables
 
-| Variable | Description | Exemple |
+| Variable | Description | Example |
 |---|---|---|
-| `SPRING_DATASOURCE_URL` | URL JDBC MySQL | `jdbc:mysql://localhost:3306/onboardflow_db...` |
-| `SPRING_DATASOURCE_USERNAME` | Utilisateur MySQL | `root` |
-| `SPRING_DATASOURCE_PASSWORD` | Mot de passe MySQL | `password` |
-| `JWT_SECRET_BASE64` | Secret JWT encodé en Base64 | `...` |
-| `MAILTRAP_USERNAME` | Identifiant SMTP Mailtrap | `...` |
-| `MAILTRAP_PASSWORD` | Mot de passe SMTP Mailtrap | `...` |
-| `APP_VERIFICATION_BASE_URL` | URL de vérification e-mail | `http://localhost:8081/auth/verify-email` |
+| `SPRING_DATASOURCE_URL` | MySQL JDBC URL | `jdbc:mysql://localhost:3306/onboardflow_db...` |
+| `SPRING_DATASOURCE_USERNAME` | MySQL username | `root` |
+| `SPRING_DATASOURCE_PASSWORD` | MySQL password | `password` |
+| `JWT_SECRET_BASE64` | Base64-encoded JWT secret | `...` |
+| `MAILTRAP_USERNAME` | Mailtrap SMTP username | `...` |
+| `MAILTRAP_PASSWORD` | Mailtrap SMTP password | `...` |
+| `APP_VERIFICATION_BASE_URL` | Email verification URL | `http://localhost:8081/auth/verify-email` |
 
-En environnement Docker, la configuration SMTP est remplacée par Mailpit :
+In Docker, SMTP configuration is replaced by Mailpit:
 
 ```text
 Host: mailpit
 Port: 1025
-Auth: désactivée
-TLS: désactivé
+Authentication: disabled
+TLS: disabled
 ```
 
 ---
 
-# Lancement
+# Running the Application
 
-## Développement
+## Development
 
 ```bash
 ./gradlew bootRun
 ```
 
-## Compilation
+## Build
 
 ```bash
 ./gradlew build
 ```
 
-## Génération du JAR
+## Generate the JAR
 
 ```bash
 ./gradlew bootJar
 ```
 
-Le fichier JAR est généré dans :
+The JAR is generated under:
 
 ```text
 build/libs/
 ```
 
-## Démarrer le JAR
+## Run the JAR
 
 ```bash
-java -jar build/libs/<fichier>.jar
+java -jar build/libs/<jar-file>.jar
 ```
 
 ---
 
-# Base de données
+# Database
 
-Hibernate est configuré avec :
+Hibernate is configured with:
 
 ```properties
 spring.jpa.hibernate.ddl-auto=update
 ```
 
-Les tables sont donc créées / mises à jour automatiquement par Hibernate.
+Therefore, database tables are automatically created or updated by Hibernate.
 
-## Entités principales
+## Main Entities
 
 ### `users`
 
-Stocke les informations des utilisateurs :
+Stores user information:
 
 - UUID
-- e-mail
-- mot de passe hashé
-- nom complet
-- image de profil
-- statut
-- vérification e-mail
-- rôle
-- dates de création et de modification
+- email
+- hashed password
+- full name
+- profile image
+- status
+- email verification status
+- role
+- creation date
+- update date
 
 ### `refresh_tokens`
 
-Stocke les refresh tokens sous forme de hash.
+Stores refresh tokens as hashes.
 
 ### `email_verification_tokens`
 
-Stocke les tokens utilisés pour vérifier les adresses e-mail.
+Stores tokens used to verify email addresses.
 
 ---
 
-# Authentification JWT
+# JWT Authentication
 
-Lors d'une connexion réussie, l'API retourne :
+After a successful login, the API returns:
 
 ```json
 {
@@ -524,52 +519,52 @@ Lors d'une connexion réussie, l'API retourne :
 }
 ```
 
-L'access token doit être envoyé dans l'en-tête :
+The access token must be sent using:
 
 ```http
 Authorization: Bearer <accessToken>
 ```
 
-### Durées
+### Token Lifetimes
 
-| Token | Durée |
+| Token | Lifetime |
 |---|---:|
-| Access token | 1 heure |
-| Refresh token | 30 jours |
+| Access token | 1 hour |
+| Refresh token | 30 days |
 
-Le refresh token est également enregistré côté serveur sous forme de hash SHA-256.
+The refresh token is also stored server-side as a SHA-256 hash.
 
-Lors d'un refresh :
+During refresh:
 
 ```text
-Refresh token valide
+Valid refresh token
        │
        ▼
-Vérification JWT
+JWT validation
        │
        ▼
-Recherche du hash en base
+Hash lookup in database
        │
        ▼
-Ancien refresh token supprimé
+Old refresh token deleted
        │
        ▼
-Nouveaux access + refresh tokens
+New access + refresh tokens
 ```
 
-Cette rotation limite la réutilisation d'un ancien refresh token.
+This rotation reduces the risk of reusing an old refresh token.
 
 ---
 
 # API
 
-Base URL en développement local :
+Base URL for local development:
 
 ```text
 http://localhost:8081
 ```
 
-Avec Docker :
+With Docker:
 
 ```text
 http://localhost:8080
@@ -577,7 +572,7 @@ http://localhost:8080
 
 ---
 
-## 1. Inscription
+## 1. Register
 
 ### Endpoint
 
@@ -595,7 +590,7 @@ POST /auth/register
 }
 ```
 
-### Réponse
+### Response
 
 ```json
 {
@@ -606,11 +601,11 @@ POST /auth/register
 }
 ```
 
-Un e-mail de vérification est ensuite envoyé.
+A verification email is then sent.
 
 ---
 
-## 2. Vérification e-mail
+## 2. Verify Email
 
 ### Endpoint
 
@@ -618,26 +613,26 @@ Un e-mail de vérification est ensuite envoyé.
 GET /auth/verify-email?token=<TOKEN>
 ```
 
-### Réponse
+### Response
 
 ```text
 Successfully verified email ! You now have full access
 ```
 
-Après vérification :
+After verification:
 
 ```text
 isEmailVerified = true
 status = ACTIVE
 ```
 
-Le token de vérification est ensuite supprimé.
+The verification token is then deleted.
 
-Les tokens de vérification expirent après **3 jours**.
+Verification tokens expire after **3 days**.
 
 ---
 
-## 3. Renvoyer l'e-mail de vérification
+## 3. Resend Verification Email
 
 ### Endpoint
 
@@ -645,11 +640,11 @@ Les tokens de vérification expirent après **3 jours**.
 POST /auth/resend-verification-email
 ```
 
-Le endpoint récupère l'utilisateur connecté, supprime son ancien token et génère un nouveau token valable 3 jours.
+The endpoint retrieves the authenticated user, removes the previous token, and generates a new token valid for 3 days.
 
 ---
 
-## 4. Connexion
+## 4. Login
 
 ### Endpoint
 
@@ -666,7 +661,7 @@ POST /auth/login
 }
 ```
 
-### Réponse
+### Response
 
 ```json
 {
@@ -675,11 +670,11 @@ POST /auth/login
 }
 ```
 
-### Limitation
+### Rate Limit
 
-Le endpoint de login est limité à **5 requêtes par minute et par adresse IP**.
+The login endpoint is limited to **5 requests per minute per IP address**.
 
-En cas de dépassement :
+When the limit is exceeded:
 
 ```http
 429 Too Many Requests
@@ -687,7 +682,7 @@ En cas de dépassement :
 
 ---
 
-## 5. Profil courant
+## 5. Current User Profile
 
 ### Endpoint
 
@@ -701,7 +696,7 @@ GET /auth/me
 Authorization: Bearer <ACCESS_TOKEN>
 ```
 
-### Réponse
+### Response
 
 ```json
 {
@@ -714,7 +709,7 @@ Authorization: Bearer <ACCESS_TOKEN>
 
 ---
 
-## 6. Modification du profil
+## 6. Update Profile
 
 ### Endpoint
 
@@ -728,7 +723,7 @@ PUT /auth/me
 Authorization: Bearer <ACCESS_TOKEN>
 ```
 
-### Body exemple
+### Example Body
 
 ```json
 {
@@ -737,7 +732,7 @@ Authorization: Bearer <ACCESS_TOKEN>
 }
 ```
 
-Pour changer le mot de passe :
+To change the password:
 
 ```json
 {
@@ -745,7 +740,7 @@ Pour changer le mot de passe :
 }
 ```
 
-Les champs disponibles sont :
+Available fields include:
 
 ```text
 password
@@ -756,7 +751,7 @@ profileImageUrl
 
 ---
 
-## 7. Rafraîchir les tokens
+## 7. Refresh Tokens
 
 ### Endpoint
 
@@ -772,7 +767,7 @@ POST /auth/refresh
 }
 ```
 
-### Réponse
+### Response
 
 ```json
 {
@@ -781,11 +776,11 @@ POST /auth/refresh
 }
 ```
 
-L'ancien refresh token est invalidé après utilisation.
+The previous refresh token is invalidated after use.
 
 ---
 
-## 8. Déconnexion
+## 8. Logout
 
 ### Endpoint
 
@@ -799,11 +794,11 @@ POST /auth/logout
 Authorization: Bearer <ACCESS_TOKEN>
 ```
 
-La déconnexion supprime les refresh tokens enregistrés pour l'utilisateur.
+Logout deletes the user's stored refresh tokens.
 
 ---
 
-## 9. Administration des utilisateurs
+## 9. User Administration
 
 ### Endpoint
 
@@ -811,68 +806,68 @@ La déconnexion supprime les refresh tokens enregistrés pour l'utilisateur.
 GET /admin/users
 ```
 
-### Paramètres disponibles
+### Available Parameters
 
-| Paramètre | Description |
+| Parameter | Description |
 |---|---|
-| `role` | `ADMIN` ou `USER` |
+| `role` | `ADMIN` or `USER` |
 | `isEmailVerified` | `true` / `false` |
-| `search` | Recherche dans le nom ou l'e-mail |
-| `page` | Numéro de page |
-| `size` | Taille de page |
-| `sort` | Champ et direction de tri |
+| `search` | Search by name or email |
+| `page` | Page number |
+| `size` | Page size |
+| `sort` | Field and sort direction |
 
-### Exemple
+### Example
 
 ```http
 GET /admin/users?page=0&size=10&sort=createdAt,desc
 ```
 
-Avec recherche :
+With search:
 
 ```http
 GET /admin/users?search=john&page=0&size=10
 ```
 
-Avec filtre :
+With filters:
 
 ```http
 GET /admin/users?role=USER&isEmailVerified=true
 ```
 
-> Le code actuel authentifie les requêtes `/admin/users`, mais le contrôleur ne contient pas de règle explicite `hasRole("ADMIN")`. Il est donc recommandé d'ajouter une autorisation basée sur le rôle avant une mise en production.
+> The current code authenticates `/admin/users` requests, but the controller does not explicitly enforce the `ADMIN` role. It is strongly recommended to add role-based authorization before production deployment.
 
 ---
 
 # Swagger / OpenAPI
 
-La documentation OpenAPI est générée automatiquement avec SpringDoc.
+OpenAPI documentation is generated automatically using SpringDoc.
 
-Swagger UI :
+Swagger UI:
 
 ```text
 http://localhost:8081/swagger-ui/index.html
 ```
 
-Avec Docker :
+With Docker:
 
 ```text
 http://localhost:8080/swagger-ui/index.html
 ```
 
-Documentation OpenAPI JSON :
+OpenAPI JSON:
 
 ```text
 http://localhost:8081/v3/api-docs
 ```
 
-Dans Swagger, utiliser :
+In Swagger UI, click:
 
 ```text
 Authorize
 ```
 
-puis :
+Then enter:
 
 ```text
 Bearer <ACCESS_TOKEN>
@@ -880,43 +875,43 @@ Bearer <ACCESS_TOKEN>
 
 ---
 
-# E-mails de développement
+# Development Emails
 
-En environnement Docker, le projet utilise **Mailpit**.
+In Docker, the project uses **Mailpit**.
 
-Interface web :
+Web interface:
 
 ```text
 http://localhost:8025
 ```
 
-Serveur SMTP :
+SMTP server:
 
 ```text
 mailpit:1025
 ```
 
-Lorsqu'un utilisateur s'inscrit, l'e-mail de vérification est intercepté par Mailpit.
+When a user registers, the verification email is captured by Mailpit.
 
-Cela permet de tester le processus de vérification sans envoyer de vrais e-mails.
+This allows the complete email verification workflow to be tested without sending real emails.
 
 ---
 
-# Rate limiting
+# Rate Limiting
 
-Le `RateLimitFilter` protège spécifiquement :
+The `RateLimitFilter` protects:
 
 ```http
 POST /auth/login
 ```
 
-La limite actuelle est :
+Current limit:
 
 ```text
-5 requêtes / minute / IP
+5 requests / minute / IP
 ```
 
-Après consommation du quota, l'API retourne :
+After the quota is exceeded, the API returns:
 
 ```json
 {
@@ -926,13 +921,13 @@ Après consommation du quota, l'API retourne :
 }
 ```
 
-Le mécanisme utilise **Bucket4j** et une map concurrente en mémoire.
+The current implementation uses **Bucket4j** with an in-memory concurrent map.
 
 ---
 
 # Tests
 
-Le projet contient notamment :
+The project contains tests such as:
 
 ```text
 OnboardflowApplicationTests.kt
@@ -941,19 +936,19 @@ AuthFlowIntegrationtest.kt
 UserProfileSecurityTest.kt
 ```
 
-Pour lancer tous les tests :
+Run all tests:
 
 ```bash
 ./gradlew test
 ```
 
-Pour construire le projet avec les tests :
+Build the project including tests:
 
 ```bash
 ./gradlew build
 ```
 
-Pour obtenir un rapport de tests, consulter :
+Test reports are available at:
 
 ```text
 build/reports/tests/test/index.html
@@ -963,7 +958,7 @@ build/reports/tests/test/index.html
 
 # Docker
 
-Le `docker-compose.yml` fournit trois services :
+The `docker-compose.yml` provides three services.
 
 ### API
 
@@ -971,7 +966,7 @@ Le `docker-compose.yml` fournit trois services :
 onboardflow-api
 ```
 
-Port :
+Port:
 
 ```text
 8080 -> 8081
@@ -983,7 +978,7 @@ Port :
 onboardflow-db
 ```
 
-Port :
+Port:
 
 ```text
 3307 -> 3306
@@ -995,38 +990,38 @@ Port :
 onboardflow-mailpit
 ```
 
-Ports :
+Ports:
 
 ```text
 8025 -> 8025
 1025 -> 1025
 ```
 
-### Démarrage
+### Start
 
 ```bash
 docker compose up --build
 ```
 
-### Arrêt
+### Stop
 
 ```bash
 docker compose down
 ```
 
-### Arrêt avec suppression des données MySQL
+### Stop and delete MySQL data
 
 ```bash
 docker compose down -v
 ```
 
-> La commande `down -v` supprime le volume `mysql_data` et donc les données persistées de MySQL.
+> `down -v` removes the `mysql_data` volume and therefore deletes persisted MySQL data.
 
 ---
 
-# Compte administrateur initial
+# Initial Admin Account
 
-Au démarrage, `DatabaseSeeder` crée automatiquement un compte administrateur s'il n'existe pas déjà :
+At startup, `DatabaseSeeder` automatically creates an administrator account if it does not already exist:
 
 ```text
 Email    : admin@onboardflow.com
@@ -1038,15 +1033,15 @@ Verified : true
 
 ### ⚠️ Important
 
-Ces identifiants sont des identifiants de développement présents directement dans le code du seeder.
+These credentials are development credentials defined directly in the seeder code.
 
-**Ils doivent impérativement être modifiés ou supprimés avant une mise en production.**
+**They must be changed or removed before production deployment.**
 
 ---
 
-# Modèle de données
+# Data Model
 
-Relation simplifiée :
+Simplified relationship:
 
 ```text
                  ┌─────────────────────┐
@@ -1078,21 +1073,21 @@ Relation simplifiée :
 └────────────────────────┘   └─────────────────────────┘
 ```
 
-### Statuts utilisateur
+### User Statuses
 
 ```text
 PENDING_VERIFICATION
         │
-        │ vérification e-mail
+        │ email verification
         ▼
       ACTIVE
         │
-        │ désactivation
+        │ deactivation
         ▼
    DEACTIVATED
 ```
 
-### Rôles
+### Roles
 
 ```text
 USER
@@ -1101,15 +1096,15 @@ ADMIN
 
 ---
 
-# Sécurité
+# Security
 
-Le projet implémente plusieurs mécanismes de sécurité.
+The project implements several security mechanisms.
 
-## Hashage des mots de passe
+## Password Hashing
 
-Les mots de passe ne sont jamais enregistrés en clair.
+Passwords are never stored in plain text.
 
-Ils sont hashés avec :
+They are hashed using:
 
 ```text
 BCryptPasswordEncoder
@@ -1117,39 +1112,39 @@ BCryptPasswordEncoder
 
 ## JWT
 
-Les JWT sont signés avec :
+JWTs are signed using:
 
 ```text
 HS256
 ```
 
-Le secret est fourni via :
+The secret is provided through:
 
 ```text
 JWT_SECRET_BASE64
 ```
 
-Il ne doit jamais être commit dans Git.
+It must never be committed to Git.
 
-## Refresh tokens
+## Refresh Tokens
 
-Les refresh tokens bruts ne sont pas enregistrés en base.
+Raw refresh tokens are not stored in the database.
 
-Le backend stocke leur hash SHA-256.
+The backend stores their SHA-256 hashes.
 
-## API stateless
+## Stateless API
 
-Spring Security utilise :
+Spring Security uses:
 
 ```text
 SessionCreationPolicy.STATELESS
 ```
 
-Il n'y a donc pas de session HTTP classique.
+Therefore, there is no traditional HTTP session.
 
 ## Validation
 
-Les données entrantes utilisent Jakarta Validation :
+Incoming requests use Jakarta Validation:
 
 ```text
 @NotBlank
@@ -1160,58 +1155,58 @@ Les données entrantes utilisent Jakarta Validation :
 
 ---
 
-# Points d'attention
+# Important Notes
 
-Cette section décrit des éléments observés directement dans le code actuel.
+These points were identified directly from the current codebase.
 
-### 1. Autorisation ADMIN
+### 1. ADMIN Authorization
 
-`/admin/users` nécessite une authentification, mais aucune vérification explicite du rôle `ADMIN` n'est présente dans `AdminUserController` ou `SecurityConfig`.
+`/admin/users` requires authentication, but there is no explicit `ADMIN` role check in the current `AdminUserController` / security configuration.
 
-Pour une vraie séparation des privilèges, ajouter par exemple une règle du type :
+For proper privilege separation, add a rule such as:
 
 ```kotlin
 .requestMatchers("/admin/**").hasRole("ADMIN")
 ```
 
-ou utiliser une annotation de méthode adaptée.
+or use an appropriate method-level security annotation.
 
-### 2. Compte administrateur codé en dur
+### 2. Hardcoded Admin Credentials
 
-Le compte :
+The following account:
 
 ```text
 admin@onboardflow.com
 AdminPass123!
 ```
 
-est créé automatiquement par `DatabaseSeeder`.
+is automatically created by `DatabaseSeeder`.
 
-Il faut utiliser des secrets/configurations d'environnement en production.
+Production environments should use environment variables or a secure secret-management system.
 
 ### 3. `ddl-auto=update`
 
-La configuration :
+The current configuration:
 
 ```properties
 spring.jpa.hibernate.ddl-auto=update
 ```
 
-est pratique en développement mais n'est généralement pas suffisante pour une stratégie de migration de base de données en production.
+is convenient for development but is generally not sufficient as a production database migration strategy.
 
-Une solution comme Flyway ou Liquibase peut être introduite.
+Consider using Flyway or Liquibase.
 
-### 4. Rate limiting en mémoire
+### 4. In-Memory Rate Limiting
 
-Le rate limiting utilise une `ConcurrentHashMap` locale.
+Rate limiting currently uses a local `ConcurrentHashMap`.
 
-En cas de déploiement avec plusieurs instances de l'API, chaque instance aura son propre compteur.
+If multiple API instances are deployed, each instance will have its own rate-limit counters.
 
-Pour un environnement distribué, utiliser un stockage partagé ou un reverse proxy/API gateway adapté.
+For distributed deployments, use shared storage or an appropriate API gateway / distributed rate-limiting solution.
 
 ### 5. Secrets
 
-Ne jamais mettre les valeurs suivantes directement dans Git :
+Never commit the following values to Git:
 
 ```text
 JWT_SECRET_BASE64
@@ -1219,25 +1214,25 @@ SPRING_DATASOURCE_PASSWORD
 MAILTRAP_PASSWORD
 ```
 
-Utiliser des variables d'environnement ou un gestionnaire de secrets.
+Use environment variables or a secret manager.
 
-### 6. URL de vérification
+### 6. Verification URL
 
-L'URL par défaut est :
+The default verification URL is:
 
 ```text
 http://localhost:8081/auth/verify-email
 ```
 
-Elle doit être remplacée par l'URL réellement accessible au client en production.
+It must be replaced with the actual client-accessible URL in production.
 
 ---
 
-# Dépannage
+# Troubleshooting
 
-## L'application ne démarre pas à cause de MySQL
+## The application cannot connect to MySQL
 
-Vérifier :
+Check:
 
 ```text
 SPRING_DATASOURCE_URL
@@ -1245,13 +1240,13 @@ SPRING_DATASOURCE_USERNAME
 SPRING_DATASOURCE_PASSWORD
 ```
 
-Avec Docker, vérifier :
+With Docker:
 
 ```bash
 docker compose ps
 ```
 
-Puis :
+Then:
 
 ```bash
 docker compose logs db
@@ -1259,17 +1254,17 @@ docker compose logs db
 
 ---
 
-## L'API retourne une erreur JWT
+## JWT errors
 
-Vérifier que :
+Make sure:
 
 ```text
 JWT_SECRET_BASE64
 ```
 
-est défini et qu'il s'agit bien d'une chaîne Base64 correspondant à une clé suffisamment longue pour HS256.
+is defined and contains a sufficiently long Base64-encoded secret suitable for HS256.
 
-Exemple de génération :
+Generate one with:
 
 ```bash
 openssl rand -base64 32
@@ -1277,103 +1272,103 @@ openssl rand -base64 32
 
 ---
 
-## Aucun e-mail n'apparaît
+## Verification emails are not appearing
 
-Avec Docker :
+With Docker:
 
-1. Vérifier que Mailpit tourne :
+1. Check that Mailpit is running:
 
 ```bash
 docker compose ps
 ```
 
-2. Ouvrir :
+2. Open:
 
 ```text
 http://localhost:8025
 ```
 
-3. Vérifier la configuration SMTP.
+3. Verify the SMTP configuration.
 
 ---
 
-## Erreur `401 Unauthorized`
+## `401 Unauthorized`
 
-Vérifier que le header est bien envoyé :
+Make sure the request contains:
 
 ```http
 Authorization: Bearer <ACCESS_TOKEN>
 ```
 
-et que l'access token n'est pas expiré.
+and that the access token has not expired.
 
 ---
 
-## Erreur `429 Too Many Requests`
+## `429 Too Many Requests`
 
-Le login est limité à 5 tentatives par minute et par IP.
+Login is limited to 5 attempts per minute per IP address.
 
-Attendre le renouvellement du quota avant de réessayer.
-
----
-
-# Améliorations recommandées
-
-Pour faire évoluer le projet vers un environnement de production, les améliorations suivantes sont recommandées :
-
-- Ajouter une vraie autorisation RBAC pour `/admin/**`.
-- Déplacer les identifiants administrateur dans des variables d'environnement.
-- Remplacer `ddl-auto=update` par Flyway ou Liquibase.
-- Ajouter une configuration CORS explicite selon les clients autorisés.
-- Ajouter des logs structurés et une stratégie de monitoring.
-- Ajouter des métriques métier via Actuator.
-- Utiliser un rate limiter distribué si plusieurs instances sont déployées.
-- Ajouter une rotation/gestion avancée des secrets JWT.
-- Prévoir une révocation globale des tokens en cas de compromission.
-- Ajouter des tests couvrant les rôles `ADMIN` et `USER`.
-- Ajouter des tests d'expiration des tokens.
-- Ajouter des tests de vérification et d'expiration des e-mails.
-- Ajouter une stratégie de migration de schéma.
-- Configurer HTTPS/TLS devant l'API en production.
-- Éviter d'exposer des détails internes dans les messages d'erreur en production.
-- Ajouter une configuration séparée `application-dev.properties` / `application-prod.properties`.
+Wait for the quota to reset before trying again.
 
 ---
 
-# Commandes utiles
+# Recommended Improvements
+
+For production readiness, the following improvements are recommended:
+
+- Add proper RBAC authorization for `/admin/**`.
+- Move administrator credentials to environment variables or a secret manager.
+- Replace `ddl-auto=update` with Flyway or Liquibase.
+- Add explicit CORS configuration for trusted clients.
+- Add structured logging and monitoring.
+- Add business metrics through Actuator.
+- Use distributed rate limiting when multiple API instances are deployed.
+- Implement stronger JWT secret/key rotation and management.
+- Add global token revocation mechanisms for compromised credentials.
+- Add tests covering `ADMIN` and `USER` authorization.
+- Add token expiration tests.
+- Add email verification and expiration tests.
+- Introduce database migration scripts.
+- Configure HTTPS/TLS in production.
+- Avoid exposing internal implementation details in production error messages.
+- Add separate environment configurations such as `application-dev.properties` and `application-prod.properties`.
+
+---
+
+# Useful Commands
 
 ```bash
-# Compiler
+# Build
 ./gradlew build
 
-# Tester
+# Run tests
 ./gradlew test
 
-# Lancer localement
+# Run locally
 ./gradlew bootRun
 
-# Nettoyer
+# Clean
 ./gradlew clean
 
-# Construire le JAR
+# Build JAR
 ./gradlew bootJar
 
 # Docker
 docker compose up --build
 
-# Voir les logs
+# View logs
 docker compose logs -f app
 
-# Arrêter les conteneurs
+# Stop containers
 docker compose down
 
-# Arrêter et supprimer les volumes
+# Stop containers and remove volumes
 docker compose down -v
 ```
 
 ---
 
-# Flux d'utilisation recommandé
+# Recommended User Flow
 
 ```text
                     ┌───────────────┐
@@ -1387,7 +1382,7 @@ docker compose down -v
                             │
                             ▼
                  ┌──────────────────────┐
-                 │ Email de vérification│
+                 │ Verification Email   │
                  └──────────┬───────────┘
                             │
                             ▼
@@ -1410,7 +1405,7 @@ docker compose down -v
               Access Token   Refresh Token
                     │             │
                     ▼             ▼
-             API protégée     /auth/refresh
+             Protected API    /auth/refresh
                     │
                     ▼
               /auth/me
@@ -1419,59 +1414,58 @@ docker compose down -v
                     │
                     ▼
               /admin/users
-              (authentifié)
+              (authenticated)
 ```
 
 ---
 
 # Contribution
 
-1. Créer une branche :
+1. Create a branch:
 
 ```bash
-git checkout -b feature/ma-fonctionnalite
+git checkout -b feature/my-feature
 ```
 
-2. Effectuer les modifications.
+2. Make your changes.
 
-3. Lancer les tests :
+3. Run the tests:
 
 ```bash
 ./gradlew test
 ```
 
-4. Vérifier le build :
+4. Verify the build:
 
 ```bash
 ./gradlew build
 ```
 
-5. Commit :
+5. Commit:
 
 ```bash
 git add .
-git commit -m "feat: description de la fonctionnalité"
+git commit -m "feat: describe the feature"
 ```
 
-6. Push :
+6. Push:
 
 ```bash
-git push origin feature/ma-fonctionnalite
+git push origin feature/my-feature
 ```
 
 ---
 
-# Licence
+# License
 
-Aucune licence open source n'est actuellement déclarée dans le projet.
+No open-source license is currently declared in the project.
 
-Si le projet doit être distribué publiquement, il est recommandé d'ajouter un fichier `LICENSE` avec la licence choisie.
+If the project is intended to be publicly distributed, add a `LICENSE` file containing the selected license.
 
 ---
 
-## Auteur / Projet
+## Project
 
 **OnboardFlow Backend**
 
-Backend d'onboarding et de gestion des utilisateurs basé sur Kotlin + Spring Boot.
-
+An onboarding and user-management backend built with Kotlin and Spring Boot.
