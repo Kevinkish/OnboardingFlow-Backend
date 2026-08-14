@@ -36,8 +36,6 @@ The project is built with **Kotlin** and **Spring Boot**, uses **MySQL** for per
 - [Security](#security)
 - [Important Notes](#important-notes)
 - [Troubleshooting](#troubleshooting)
-- [Recommended Improvements](#recommended-improvements)
-- [License](#license)
 
 ---
 
