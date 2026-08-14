@@ -1171,7 +1171,7 @@ If I had had more time, I would have used S3 for the user profile pictures stora
 * **Rate Limiting Protection**: Integrated **Bucket4j** on critical endpoints (`POST /auth/login`) to mitigate brute-force password attacks (limited to 5 requests/minute per IP).
 * **Development Mail Abstraction**: Configured Spring Mail with **Mailpit** in Docker Compose, allowing full end-to-end testing of email verification without real email credentials or external dependencies.
 
-# Key Assumptions
+### Key Assumptions
 * **Single Active Session Strategy**: To ensure strict user tracking during onboarding, issuing a new refresh token or triggering a logout revokes previous refresh tokens for that specific user.
 * **Database Schema Auto-Creation**: Enabled `hibernate.ddl-auto=update` to streamline testing and review. In a production scenario, schema migrations would be strictly managed via Flyway or Liquibase.
 * **Email Verification Enforcement**: Unverified accounts stay in `PENDING_VERIFICATION` status until the user completes the token verification link within 3 days.
