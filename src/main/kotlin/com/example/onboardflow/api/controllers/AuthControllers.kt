@@ -1,5 +1,6 @@
 package com.example.onboardflow.api.controllers
 
+import com.example.onboardflow.api.controllers.AuthControllers.MeProfileResponse
 import com.example.onboardflow.application.service.AuthService
 import com.example.onboardflow.domain.model.User
 import com.example.onboardflow.domain.model.UserStatusEnum
@@ -151,14 +152,14 @@ class AuthControllers(
         return authService.profile().toResponse()
     }
 
-    private fun User.toResponse(): MeProfileResponse {
-        return MeProfileResponse(
-            email = email,
-            fullName = fullName,
-            status = status,
-            lastLoginAt = lastLoginAt
-        );
-    }
 
+}
 
+fun User.toResponse(): MeProfileResponse {
+    return MeProfileResponse(
+        email = email,
+        fullName = fullName,
+        status = status,
+        lastLoginAt = lastLoginAt
+    );
 }
