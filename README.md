@@ -34,6 +34,8 @@ The project is built with **Kotlin** and **Spring Boot**, uses **MySQL** for per
 - [Initial Admin Account](#initial-admin-account)
 - [Data Model](#data-model)
 - [Security](#security)
+- [Know limitations](#known-limitations)
+- [Important Technical Decisions and Assumptions](#important-technical-decisions-and-assumptions)
 - [Important Notes](#important-notes)
 - [Troubleshooting](#troubleshooting)
 
@@ -1147,6 +1149,32 @@ Incoming requests use Jakarta Validation:
 @Size
 @Pattern
 ```
+
+---
+
+# Known Limitations
+
+I was limited in my implementation of S3 or MinIO for image storage management due to time constraints, so I selected the features I deemed essential.
+
+If I had had more time, I would have used S3 for the user profile pictures storage and manage it in the backend. Then, I would have used Flyway for database migration, and finally, I would have implemented the tests better.
+
+---
+
+# Important Technical Decisions and Assumptions
+
+### Technical Decisions & Architecture
+* **Layered Architecture (Clean/Hexagonal Inspired)**: Clear separation of concerns between API endpoints, business logic, domain models, and infrastructure/security config.
+* **Stateless Authentication with Token Rotation**:
+  * Access tokens (1-hour validity) ensure standard stateless request authorization.
+  * Refresh tokens (30-day validity) are stored in the database as **SHA-256 hashes** rather than plain text to protect user sessions in case of a database leak.
+  * Strict refresh token rotation is applied on every `/auth/refresh` request to prevent replay attacks.
+* **Rate Limiting Protection**: Integrated **Bucket4j** on critical endpoints (`POST /auth/login`) to mitigate brute-force password attacks (limited to 5 requests/minute per IP).
+* **Development Mail Abstraction**: Configured Spring Mail with **Mailpit** in Docker Compose, allowing full end-to-end testing of email verification without real email credentials or external dependencies.
+
+# Key Assumptions
+* **Single Active Session Strategy**: To ensure strict user tracking during onboarding, issuing a new refresh token or triggering a logout revokes previous refresh tokens for that specific user.
+* **Database Schema Auto-Creation**: Enabled `hibernate.ddl-auto=update` to streamline testing and review. In a production scenario, schema migrations would be strictly managed via Flyway or Liquibase.
+* **Email Verification Enforcement**: Unverified accounts stay in `PENDING_VERIFICATION` status until the user completes the token verification link within 3 days.
 
 ---
 
