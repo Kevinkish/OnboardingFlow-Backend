@@ -834,9 +834,6 @@ With filters:
 ```http
 GET /admin/users?role=USER&isEmailVerified=true
 ```
-
-> The current code authenticates `/admin/users` requests, but the controller does not explicitly enforce the `ADMIN` role. It is strongly recommended to add role-based authorization before production deployment.
-
 ---
 
 # Swagger / OpenAPI
