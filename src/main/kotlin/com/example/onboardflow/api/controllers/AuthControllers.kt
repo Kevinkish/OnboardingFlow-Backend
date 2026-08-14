@@ -13,7 +13,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import java.time.Instant
 
-
 @RestController
 @RequestMapping("/auth")
 class AuthControllers(
@@ -54,7 +53,6 @@ class AuthControllers(
         val status: UserStatusEnum,
         var profileImageUrl: String? = null,
         val lastLoginAt: Instant? = null
-
     )
 
     data class UserUpdateRequest(
@@ -70,11 +68,9 @@ class AuthControllers(
         val status: UserStatusEnum? = null,
         val lastLoginAt: Instant? = null,
         var profileImageUrl: String? = null,
-
-        )
+    )
 
     @PostMapping("/register")
-//    @ResponseStatus(HttpStatus.CREATED)
     fun register(
         @Valid @RequestBody body: UserRegistrationRequest
     ): MeProfileResponse {
@@ -93,7 +89,14 @@ class AuthControllers(
     @GetMapping("/verify-email")
     fun verifyEmail(@RequestParam("token") token: String): ResponseEntity<String> {
         authService.verifyEmail(token)
-        return ResponseEntity.ok("Successfully verified email ! You know have full access")
+        return ResponseEntity.ok("Successfully verified email ! You now have full access")
+    }
+
+    @PostMapping("/resend-verification-email")
+    fun resendVerificationEmail(
+    ): ResponseEntity<String> {
+        authService.resendVerificationEmail()
+        return ResponseEntity.ok("Verification email resent successfully. Please check your inbox.")
     }
 
     @PutMapping(path = ["/me"])
@@ -103,23 +106,6 @@ class AuthControllers(
         return authService.updateUserMe(body = body).toResponse()
     }
 
-//    @DeleteMapping(path = ["user/{id}"])
-//    fun deleteUserById(
-//        @PathVariable id: UUID
-//    ) {
-//        if (getConnectedUser().id != null) {
-//            checkAdmin()
-//
-//            val user = userRepository.findUserById(id) ?: throw IllegalArgumentException("Note not found")
-//            userRepository.deleteById(
-//                user.id ?: throw ResponseStatusException(
-//                    HttpStatus.NOT_FOUND,
-//                    "User with this id not found"
-//                )
-//            )
-//        }
-//    }
-
     @PostMapping("/login")
     fun login(
         @Valid @RequestBody body: LoginRequest
@@ -128,16 +114,9 @@ class AuthControllers(
     }
 
     @PostMapping("/logout")
-    fun logout(
-    ) {
+    fun logout() {
         return authService.logout()
     }
-
-//    @GetMapping("/get-token")
-//    fun getToken(
-//     ): RefreshToken {
-//        return authService.getRefreshToken()
-//    }
 
     @PostMapping("/refresh")
     fun refresh(
@@ -147,12 +126,9 @@ class AuthControllers(
     }
 
     @GetMapping("/me")
-    fun profile(
-    ): MeProfileResponse {
+    fun profile(): MeProfileResponse {
         return authService.profile().toResponse()
     }
-
-
 }
 
 fun User.toResponse(): MeProfileResponse {
@@ -161,5 +137,5 @@ fun User.toResponse(): MeProfileResponse {
         fullName = fullName,
         status = status,
         lastLoginAt = lastLoginAt
-    );
+    )
 }

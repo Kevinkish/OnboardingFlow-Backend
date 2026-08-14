@@ -52,7 +52,6 @@ class AuthService(
             ?: throw CustomNotFoundException("User not found")
     }
 
-
     fun register(
         email: String?,
         password: String?,
@@ -66,7 +65,7 @@ class AuthService(
                 email,
                 password,
                 fullName
-            ).any({ it.isNullOrBlank() })
+            ).any { it.isNullOrBlank() }
         ) {
             throw BadCredentialsException("Invalid credentials")
         }
@@ -90,13 +89,42 @@ class AuthService(
         val hashedVerificationToken = hashEncoder.encode(UUID.randomUUID().toString())
         emailVerificationTokenRepository.save(
             EmailVerificationToken(
-                hashedToken = hashedVerificationToken, user = newUser,
+                hashedToken = hashedVerificationToken,
+                user = newUser,
                 expiresAt = Instant.now().plus(3, ChronoUnit.DAYS),
                 createdAt = Instant.now()
             )
         )
         emailService.sendVerificationEmail(newUser.email, hashedVerificationToken)
         return newUser
+    }
+
+    @Transactional
+    fun resendVerificationEmail() {
+        val cleanEmail = getConnectedUser().email.trim()
+        val user = userRepository.findByEmail(cleanEmail)
+            ?: throw CustomNotFoundException("User not found")
+
+        if (user.isEmailVerified == true || user.status == UserStatusEnum.ACTIVE) {
+            throw ErrorOccurrenceException("Email is already verified")
+        }
+
+        // Delete user old token
+        emailVerificationTokenRepository.deleteByUser(user)
+
+        // Generate new one
+        val hashedVerificationToken = hashEncoder.encode(UUID.randomUUID().toString())
+        emailVerificationTokenRepository.save(
+            EmailVerificationToken(
+                hashedToken = hashedVerificationToken,
+                user = user,
+                expiresAt = Instant.now().plus(3, ChronoUnit.DAYS),
+                createdAt = Instant.now()
+            )
+        )
+
+        // Send mail
+        emailService.sendVerificationEmail(user.email, hashedVerificationToken)
     }
 
     fun profile(): User {
@@ -130,7 +158,6 @@ class AuthService(
             throw ErrorOccurrenceException("All allowed fields are null")
         }
 
-
         with(body) {
             fullName?.let { user.fullName = it.trim() }
             password?.let { user.hashedPassword = hashEncoder.encode(it) }
@@ -140,7 +167,7 @@ class AuthService(
             user.updatedAt = Instant.now()
         }
 
-        return userRepository.save(user);
+        return userRepository.save(user)
     }
 
     fun login(email: String?, password: String?): TokenPair {
@@ -171,7 +198,7 @@ class AuthService(
 //        )
 //    }
 
-    //TOKENS
+    // TOKENS
     @Transactional
     fun refresh(refreshToken: String): TokenPair {
         if (!jwtService.validatedRefreshToken(refreshToken)) {
