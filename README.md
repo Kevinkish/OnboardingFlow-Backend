@@ -1154,19 +1154,7 @@ Incoming requests use Jakarta Validation:
 
 These points were identified directly from the current codebase.
 
-### 1. ADMIN Authorization
-
-`/admin/users` requires authentication, but there is no explicit `ADMIN` role check in the current `AdminUserController` / security configuration.
-
-For proper privilege separation, add a rule such as:
-
-```kotlin
-.requestMatchers("/admin/**").hasRole("ADMIN")
-```
-
-or use an appropriate method-level security annotation.
-
-### 2. Hardcoded Admin Credentials
+### 1. Hardcoded Admin Credentials
 
 The following account:
 
@@ -1179,27 +1167,7 @@ is automatically created by `DatabaseSeeder`.
 
 Production environments should use environment variables or a secure secret-management system.
 
-### 3. `ddl-auto=update`
-
-The current configuration:
-
-```properties
-spring.jpa.hibernate.ddl-auto=update
-```
-
-is convenient for development but is generally not sufficient as a production database migration strategy.
-
-Consider using Flyway or Liquibase.
-
-### 4. In-Memory Rate Limiting
-
-Rate limiting currently uses a local `ConcurrentHashMap`.
-
-If multiple API instances are deployed, each instance will have its own rate-limit counters.
-
-For distributed deployments, use shared storage or an appropriate API gateway / distributed rate-limiting solution.
-
-### 5. Secrets
+### 2. Secrets
 
 Never commit the following values to Git:
 
@@ -1211,7 +1179,7 @@ MAILTRAP_PASSWORD
 
 Use environment variables or a secret manager.
 
-### 6. Verification URL
+### 3. Verification URL
 
 The default verification URL is:
 
