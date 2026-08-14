@@ -277,7 +277,7 @@ The project provides a `docker-compose.yml` that starts three services:
 ### 1. Clone the project
 
 ```bash
-git clone <REPOSITORY_URL>
+git clone https://github.com/Kevinkish/OnboardingFlow-Backend.git
 cd OnboardingFlow-Backend
 ```
 
