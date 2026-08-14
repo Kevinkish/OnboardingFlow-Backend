@@ -1,29 +1,26 @@
-# Step 1: Build app w/ gradle
-FROM gradle:8.5-jdk17 AS build
+# Step 1: Build stage avec JDK 17
+FROM eclipse-temurin:17-jdk AS build
 WORKDIR /app
 
-# Copy Gradle configuration files to optimize dependency caching
-COPY build.gradle.kts settings.gradle.kts gradle/ ./
+# Copier le wrapper et les fichiers de configuration Gradle
+COPY gradlew .
+COPY gradle ./gradle
+COPY build.gradle.kts settings.gradle.kts ./
+
+# Rendre le script gradlew exécutable
+RUN chmod +x ./gradlew
+
+# Telecharger les dépendances
+RUN ./gradlew dependencies --no-daemon
+
+# Copier le code source et construire le JAR
 COPY src ./src
+RUN ./gradlew bootJar --no-daemon -x test
 
-COPY . .
-
-# Build and create the JAR file (skipping tests during image build)
-RUN gradle bootJar --no-daemon -x test
-
-# Step 2: Minimal runtime image with JDK 17
-#FROM eclipse-temurin:17-jre-alpine
-
-# Step 2: Runtime image (Compatible with Mac M1/M2/M3 and Linux x86)
+# Step 2: Runtime stage
 FROM eclipse-temurin:17-jre
-
 WORKDIR /app
-
-# Copy the compiled JAR from the previous stage
 COPY --from=build /app/build/libs/*.jar app.jar
 
-# Expose API port
 EXPOSE 8080
-
-# Launch command
 ENTRYPOINT ["java", "-jar", "app.jar"]
