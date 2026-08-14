@@ -47,6 +47,9 @@ dependencies {
 
     implementation("com.bucket4j:bucket4j-core:8.10.1")
     implementation("org.springframework.boot:spring-boot-starter-mail")
+
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
 }
 
 kotlin {

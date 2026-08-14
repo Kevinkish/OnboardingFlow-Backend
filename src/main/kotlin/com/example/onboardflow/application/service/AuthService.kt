@@ -57,7 +57,6 @@ class AuthService(
         password: String?,
         fullName: String?,
         status: UserStatusEnum,
-        lastLoginAt: Instant?,
         createdAt: Instant,
         updatedAt: Instant
     ): User {
@@ -80,7 +79,6 @@ class AuthService(
                 hashedPassword = hashEncoder.encode(password.toString()),
                 fullName = fullName.toString().trim(),
                 status = status,
-                lastLoginAt = lastLoginAt,
                 createdAt = createdAt,
                 updatedAt = updatedAt,
                 role = RoleEnum.USER,
@@ -150,7 +148,7 @@ class AuthService(
                     password,
                     profileImageUrl
                 ).all { it.isNullOrBlank() } && listOf(
-                    lastLoginAt, status
+                   status
                 ).all {
                     it == null
                 }
@@ -163,7 +161,6 @@ class AuthService(
             password?.let { user.hashedPassword = hashEncoder.encode(it) }
             status?.let { user.status = it }
             profileImageUrl?.let { user.profileImageUrl = it }
-            lastLoginAt?.let { user.lastLoginAt = it }
             user.updatedAt = Instant.now()
         }
 

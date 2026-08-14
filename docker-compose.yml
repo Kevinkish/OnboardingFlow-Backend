@@ -1,0 +1,61 @@
+#version: '3.8'
+
+services:
+  # 1. MySQL DB
+  db:
+    image: mysql:8.0
+    container_name: onboardflow-db
+    environment:
+      MYSQL_DATABASE: onboardflow_db
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_USER: user
+      MYSQL_PASSWORD: userpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Mailpit
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: onboardflow-mailpit
+    ports:
+      - "8025:8025" # Web Dashboard to consult emails
+      - "1025:1025" # SMTP Port to listen by Spring Boot
+    environment:
+      MP_MAX_MESSAGES: 5000
+
+  # 3. Spring Boot API
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: onboardflow-api
+    ports:
+      - "8080:8080"
+    environment:
+      # MySQL Configuration
+#      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/onboardflow_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/onboardflow_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=userpassword
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
+
+      # Mailpit Configuration
+      - SPRING_MAIL_HOST=mailpit
+      - SPRING_MAIL_PORT=1025
+      - SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH=false
+      - SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE=false
+    depends_on:
+      db:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+
+volumes:
+  mysql_data:

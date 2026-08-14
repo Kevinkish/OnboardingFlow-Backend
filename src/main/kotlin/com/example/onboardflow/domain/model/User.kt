@@ -27,8 +27,6 @@ class User(
     @Enumerated(EnumType.STRING)
     var status: UserStatusEnum,
 
-    var lastLoginAt: Instant? = null,
-
     var isEmailVerified: Boolean? = false,
 
     val createdAt: Instant = Instant.now(),

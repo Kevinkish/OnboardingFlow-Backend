@@ -15,14 +15,13 @@ import org.springframework.web.bind.annotation.*
 class AdminUserController(
     private val adminUserService: AdminUserService
 ) {
-
     @GetMapping
     fun getAllUsers(
         @RequestParam(required = false) role: RoleEnum?,
         @RequestParam(required = false) isEmailVerified: Boolean?,
         @RequestParam(required = false) search: String?,
 
-        // Spring intercepte : ?page=0&size=10&sort=createdAt,desc
+        // Spring will get : ?page=0&size=10&sort=createdAt,desc
         @PageableDefault(page = 0, size = 10, sort = ["createdAt"], direction = Sort.Direction.DESC)
         pageable: Pageable
     ): ResponseEntity<PageResponse<AuthControllers.MeProfileResponse>> {

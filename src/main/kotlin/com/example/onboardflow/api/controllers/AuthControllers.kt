@@ -44,7 +44,8 @@ class AuthControllers(
     )
 
     data class RefreshTokenRequest(
-        val refreshToken: String
+        @field:NotBlank(message = "Refresh token is mandatory")
+        val refreshToken: String?
     )
 
     data class MeProfileResponse(
@@ -52,7 +53,6 @@ class AuthControllers(
         val fullName: String,
         val status: UserStatusEnum,
         var profileImageUrl: String? = null,
-        val lastLoginAt: Instant? = null
     )
 
     data class UserUpdateRequest(
@@ -66,7 +66,6 @@ class AuthControllers(
         @field:Size(min = 2, max = 100, message = "Full name must be between 2 and 100 characters")
         val fullName: String? = null,
         val status: UserStatusEnum? = null,
-        val lastLoginAt: Instant? = null,
         var profileImageUrl: String? = null,
     )
 
@@ -78,7 +77,6 @@ class AuthControllers(
             email = body.email,
             password = body.password,
             fullName = body.fullName,
-            lastLoginAt = null,
             createdAt = Instant.now(),
             updatedAt = Instant.now(),
             status = UserStatusEnum.PENDING_VERIFICATION
@@ -120,9 +118,9 @@ class AuthControllers(
 
     @PostMapping("/refresh")
     fun refresh(
-        @RequestBody body: RefreshTokenRequest
+        @Valid @RequestBody body: RefreshTokenRequest
     ): AuthService.TokenPair {
-        return authService.refresh(body.refreshToken)
+        return authService.refresh(body.refreshToken.toString())
     }
 
     @GetMapping("/me")
@@ -136,6 +134,5 @@ fun User.toResponse(): MeProfileResponse {
         email = email,
         fullName = fullName,
         status = status,
-        lastLoginAt = lastLoginAt
     )
 }
