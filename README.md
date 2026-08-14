@@ -1309,29 +1309,6 @@ Wait for the quota to reset before trying again.
 
 ---
 
-# Recommended Improvements
-
-For production readiness, the following improvements are recommended:
-
-- Add proper RBAC authorization for `/admin/**`.
-- Move administrator credentials to environment variables or a secret manager.
-- Replace `ddl-auto=update` with Flyway or Liquibase.
-- Add explicit CORS configuration for trusted clients.
-- Add structured logging and monitoring.
-- Add business metrics through Actuator.
-- Use distributed rate limiting when multiple API instances are deployed.
-- Implement stronger JWT secret/key rotation and management.
-- Add global token revocation mechanisms for compromised credentials.
-- Add tests covering `ADMIN` and `USER` authorization.
-- Add token expiration tests.
-- Add email verification and expiration tests.
-- Introduce database migration scripts.
-- Configure HTTPS/TLS in production.
-- Avoid exposing internal implementation details in production error messages.
-- Add separate environment configurations such as `application-dev.properties` and `application-prod.properties`.
-
----
-
 # Useful Commands
 
 ```bash
@@ -1362,58 +1339,6 @@ docker compose down
 # Stop containers and remove volumes
 docker compose down -v
 ```
-
----
-
-# Recommended User Flow
-
-```text
-                    ┌───────────────┐
-                    │ POST /register│
-                    └───────┬───────┘
-                            │
-                            ▼
-                 ┌──────────────────────┐
-                 │ PENDING_VERIFICATION │
-                 └──────────┬───────────┘
-                            │
-                            ▼
-                 ┌──────────────────────┐
-                 │ Verification Email   │
-                 └──────────┬───────────┘
-                            │
-                            ▼
-                 ┌──────────────────────┐
-                 │ GET /verify-email    │
-                 └──────────┬───────────┘
-                            │
-                            ▼
-                    ┌───────────────┐
-                    │    ACTIVE     │
-                    └───────┬───────┘
-                            │
-                            ▼
-                     ┌────────────┐
-                     │ POST /login│
-                     └─────┬──────┘
-                           │
-                    ┌──────┴──────┐
-                    ▼             ▼
-              Access Token   Refresh Token
-                    │             │
-                    ▼             ▼
-             Protected API    /auth/refresh
-                    │
-                    ▼
-              /auth/me
-              /auth/me PUT
-              /auth/logout
-                    │
-                    ▼
-              /admin/users
-              (authenticated)
-```
-
 ---
 
 # Contribution
@@ -1450,15 +1375,6 @@ git commit -m "feat: describe the feature"
 ```bash
 git push origin feature/my-feature
 ```
-
----
-
-# License
-
-No open-source license is currently declared in the project.
-
-If the project is intended to be publicly distributed, add a `LICENSE` file containing the selected license.
-
 ---
 
 ## Project
